@@ -39,7 +39,6 @@ if _name_ == "_main_":
     class_names = np.array(["T-shirt/top","Trouser","Pullover","Dress",
         "Coat","Sandal","Shirt","Sneaker","Bag","Ankle boot"])
 
-
     # transforms to apply to the data
     trans = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), torchvision.transforms.Normalize((0.1307,), (0.3081,))])
 
@@ -59,18 +58,35 @@ if _name_ == "_main_":
     class_rate_per_class = [0.0] * num_classes
     avg_class_rate = 0.0
 
-    # Train the CNN
-    for e in range(epochs):
-        for i, (batch, labels) in enumerate(train_dataloader):
+    if(rank == 0):
+           for e in range(0,epochs/2):
+                for i, (batch, labels) in enumerate(train_dataloader):
             # Forward Propogation
-            y = cnnModel(batch)
-            loss = loss_f(y, labels)
-            losses.append(loss.item())
+                    y = cnnModel(batch)
+                    loss = loss_f(y, labels)
+                    losses.append(loss.item())
 
-            # Backward Propogation
-            adam.zero_grad()
-            loss.backward()
-            adam.step()
+                    # Backward Propogation
+                    adam.zero_grad()
+                    loss.backward()
+                    adam.step()
+
+
+    else:
+        start = rank*epochs/2
+        end = start + epochs/2
+        for e in range(start,end):
+                for i, (batch, labels) in enumerate(train_dataloader):
+            # Forward Propogation
+                    y = cnnModel(batch)
+                    loss = loss_f(y, labels)
+                    losses.append(loss.item())
+
+                    # Backward Propogation
+                    adam.zero_grad()
+                    loss.backward()
+                    adam.step()
+
     # Test CNN
     cnnModel.eval() # This command turns off gradient calculation, which is not needed during testing
     with torch.no_grad():
