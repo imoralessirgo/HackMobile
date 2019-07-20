@@ -94,9 +94,14 @@ if _name_ == "_main_":
         for images, labels in test_dataloader:
             y = cnnModel(images)
             _, predicted = torch.max(y.data, 1)
-            # predictions = np.hstack((predictions, predicted))
-            # y_test = np.hstack((y_test, labels.item()))
+            predictions = np.hstack((predictions, predicted))
+            y_test = np.hstack((y_test, labels.item()))
             total += labels.size(0)
             avg_class_rate += (predicted == labels).sum().item()
-   
-
+    correct = predictions == y_test
+    unique, counts = np.unique(correct, return_counts=True)
+    class_rate_per_class = [ counts[x] for x in unique] # This is the number that was correctly guessed
+    unique, counts = np.unique(y_test, return_counts=True)
+    class_rate_per_class = [ class_rate_per_class[int(x)] / counts[int(x)] for x in unique] # Divide by the total amount of each class
+    print("Average Classification Rate {}%".format( (avg_class_rate/total) * 100))
+    print(class_rate_per_class)
